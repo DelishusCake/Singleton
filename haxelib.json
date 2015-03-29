@@ -1,11 +1,11 @@
 {
 	"name": "Singleton",
-	"url": "https://github.com/DelishusCake/Singleton",
+	"url": "https://github.com/player-03/Singleton",
 	"license": "MIT",
 	"tags": ["singleton", "patterns", "utility", "cross"],
-	"description": "A macro-based solution for automatic singleton management.",
-	"version": "1.0.0",
-	"releasenote": "Initial release",
-	"contributors": ["DelishusCake"],
+	"description": "A macro-based solution for automatic singleton creation.",
+	"version": "1.1.0",
+	"releasenote": "Singleton is now an interface.",
+	"contributors": ["DelishusCake", "player-03"],
 	"dependencies": {}
 }

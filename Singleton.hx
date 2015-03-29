@@ -1,39 +1,31 @@
 import haxe.macro.Context;
 import haxe.macro.Expr;
 
-#if !macro @:autoBuild(Singleton.build()) #end
-class Singleton
-{
-	macro static public function build():Array<Field>
-	{
-		var local = Context.getLocalClass().toString().split(".");
-		
+#if !macro @:autoBuild(SingletonBuilder.build()) #end
+interface Singleton {}
+
+@:noCompletion
+class SingletonBuilder {
+	public static macro function build():Array<Field> {
 		var pos = Context.currentPos();
-		var pack = local.splice(0, local.length - 1);
-		var clazz = local[0];
-		var type = TPath( { pack: pack , name: clazz, params: [], sub: null } );
+		var pack = Context.getLocalClass().get().pack;
+		var className = Context.getLocalClass().get().name;
+		var typePath = { pack: pack , name: className };
+		var type = TPath( typePath );
 		
 		var fields = Context.getBuildFields();
-		fields.push( { name: "instance", pos: pos, access: [AStatic, APrivate], kind: FVar(type, null) } );
-		fields.push( { name: "getInstance", doc: "Get the instance of this singleton", pos: pos, access: [AStatic, APublic], kind:
-			FFun({
-				args: [], params: [], ret: type, 
-				expr: {
-					expr: {
-						EBlock([
-							{
-								expr: EIf(
-									{ expr: EBinop(OpEq, { expr: EConst(CIdent("instance")), pos: pos }, { expr: EConst(CIdent("null")), pos: pos } ), pos: pos }, 
-									{ expr: EBinop(OpAssign, { expr: EConst(CIdent("instance")), pos: pos }, { expr: ENew( { name: clazz, pack: pack, params: [] }, []), pos: pos } ), pos: pos }, null),
-								pos: pos 
-							},
-							{ expr: EReturn( { expr: EConst(CIdent("instance")), pos: pos } ), pos: pos }
-						]);
-					},
-					pos: pos
-				}
-			})
-		});
+		fields.push( { name: "instance", pos: pos, access: [AStatic, APublic], kind: FProp("get", "null", type) } );
+		fields.push( { name: "get_instance", pos: pos, access: [AStatic, APrivate],
+			meta: [ { name: ":noCompletion", pos: pos } ],
+			kind: FFun( {
+				args: [], ret: type,
+				expr: macro return instance == null ? instance = new $typePath() : instance
+			} )
+		} );
+		fields.push( { name: "getInstance", pos: pos, access: [AStatic, APublic, AInline],
+			meta: [ { name: ":noCompletion", pos: pos } ],
+			kind: FFun( { args: [], ret: type, expr: macro return get_instance() } )
+		} );
 		return fields;
 	}
 }

@@ -34,9 +34,16 @@ class SingletonBuilder {
 				break;
 			}
 		}
+		
 		if( !constructorExists ) {
+			var constructorExpr = macro {};
+			
+			if( Context.getLocalClass().get().superClass != null ) {
+				constructorExpr = macro super();
+			}
+			
 			fields.push( { name: "new", pos: pos, access: [APrivate],
-				kind: FFun( { args: [], ret: null, expr: macro {} } )
+				kind: FFun( { args: [], ret: null, expr: constructorExpr } )
 			} );
 		}
 		

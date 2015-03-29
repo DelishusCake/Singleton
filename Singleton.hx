@@ -26,6 +26,20 @@ class SingletonBuilder {
 			meta: [ { name: ":noCompletion", pos: pos } ],
 			kind: FFun( { args: [], ret: type, expr: macro return get_instance() } )
 		} );
+		
+		var constructorExists = false;
+		for( field in fields ) {
+			if( field.name == "new" ) {
+				constructorExists = true;
+				break;
+			}
+		}
+		if( !constructorExists ) {
+			fields.push( { name: "new", pos: pos, access: [APrivate],
+				kind: FFun( { args: [], ret: null, expr: macro {} } )
+			} );
+		}
+		
 		return fields;
 	}
 }

@@ -1,11 +1,14 @@
 import haxe.macro.Context;
 import haxe.macro.Expr;
 
-#if !macro @:autoBuild(SingletonBuilder.build()) #end
+#if !macro
+
+@:autoBuild(Singleton.build())
 interface Singleton {}
 
-@:noCompletion
-class SingletonBuilder {
+#else
+
+class Singleton {
 	public static macro function build():Array<Field> {
 		var pos = Context.currentPos();
 		var pack = Context.getLocalClass().get().pack;
@@ -50,3 +53,5 @@ class SingletonBuilder {
 		return fields;
 	}
 }
+
+#end

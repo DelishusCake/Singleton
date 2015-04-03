@@ -1,6 +1,6 @@
 {
 	"name": "Singleton",
-	"url": "https://github.com/player-03/Singleton",
+	"url": "https://github.com/DelishusCake/Singleton",
 	"license": "MIT",
 	"tags": ["singleton", "patterns", "utility", "cross"],
 	"description": "A macro-based solution for automatic singleton creation.",

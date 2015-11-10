@@ -17,7 +17,11 @@ class Singleton {
 		var type = TPath( typePath );
 		
 		var fields = Context.getBuildFields();
-		fields.push( { name: "instance", pos: pos, access: [AStatic, APublic], kind: FProp("get", "null", type) } );
+		fields.push( { name: "instance", pos: pos, access: [AStatic, APublic], kind: FProp(#if display "default" #else "get" #end, "null", type) } );
+		#if display
+			return fields;
+		#end
+		
 		fields.push( { name: "get_instance", pos: pos, access: [AStatic, APrivate],
 			meta: [ { name: ":noCompletion", pos: pos } ],
 			kind: FFun( {

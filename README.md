@@ -16,3 +16,4 @@ Simply implement the Singleton interface!
 Then use `instance` to grab the instance anywhere!
    
     Thing.instance;
+

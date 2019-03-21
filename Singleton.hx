@@ -10,6 +10,10 @@ interface Singleton {}
 
 class Singleton {
 	public static macro function build():Array<Field> {
+		if(Context.getLocalClass().get().isInterface) {
+			return Context.getBuildFields();
+		}
+		
 		var pos = Context.currentPos();
 		var pack = Context.getLocalClass().get().pack;
 		var className = Context.getLocalClass().get().name;

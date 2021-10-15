@@ -10,53 +10,88 @@ interface Singleton {}
 
 class Singleton {
 	public static macro function build():Array<Field> {
-		if( Context.getLocalClass().get().isInterface ) {
-			return Context.getBuildFields();
+		var fields:Array<Field> = Context.getBuildFields();
+		
+		//Interfaces can extend this, but no changes are needed.
+		if(Context.getLocalClass().get().isInterface) {
+			return fields;
 		}
 		
-		var pos = Context.currentPos();
-		var pack = Context.getLocalClass().get().pack;
-		var className = Context.getLocalClass().get().name;
-		var typePath = { pack: pack , name: className };
-		var type = TPath( typePath );
+		var typePath:TypePath = {
+			pack: Context.getLocalClass().get().pack,
+			name: Context.getLocalClass().get().name
+		};
+		var type:ComplexType = TPath(typePath);
 		
-		var fields = Context.getBuildFields();
+		/**
+		 * Extracts the fields from the given `macro class XYZ {}`
+		 * expression, and adds them to `fields`.
+		 * 
+		 * This function mainly exists for readability.
+		 */
+		function addClassFields(classDef:TypeDefinition):Void {
+			fields = fields.concat(classDef.fields);
+		}
 		
-		fields.push( { name: "instance", pos: pos, access: [AStatic, APublic], kind: FProp(#if display "default" #else "get" #end, "null", type) } );
 		#if display
+			addClassFields(macro class Singleton {
+				public static var instance:$typePath;
+			});
 			return fields;
 		#end
 		
-		fields.push( { name: "get_instance", pos: pos, access: [AStatic, APrivate],
-			meta: [ { name: ":noCompletion", pos: pos } ],
-			kind: FFun( {
-				args: [], ret: type,
-				expr: macro return instance == null ? instance = new $typePath() : instance
-			} )
-		} );
-		fields.push( { name: "getInstance", pos: pos, access: [AStatic, APublic, AInline],
-			meta: [ { name: ":noCompletion", pos: pos } ],
-			kind: FFun( { args: [], ret: type, expr: macro return get_instance() } )
-		} );
+		//Define the `instance` field and its getters.
+		addClassFields(macro class Singleton {
+			public static var instance(get, null):$type;
+			
+			@:noCompletion private static function get_instance():$type {
+				return instance != null ? instance : new $typePath();
+			}
+			
+			//For backwards compatibility.
+			@:noCompletion public static inline function getInstance():$type {
+				return instance;
+			}
+		});
 		
-		var constructorExists = false;
-		for( field in fields ) {
-			if( field.name == "new" ) {
-				constructorExists = true;
-				break;
+		//`instance = this` must be the first line of the
+		//constructor. Otherwise, the constructor could set
+		//off an infinite loop by calling `get_instance()`.
+		
+		//First, check if a constructor exists.
+		for(field in fields) {
+			if(field.name == "new") {
+				//If so, insert the line and return.
+				switch(field.kind) {
+					case FFun({ expr: { expr: EBlock(exprs) } }):
+						exprs.unshift(macro instance = this);
+					case FFun(f):
+						f.expr = macro {
+							instance = this;
+							${f.expr};
+						};
+					default:
+						Context.error("Constructor is not a function.", field.pos);
+				}
+				
+				return fields;
 			}
 		}
 		
-		if( !constructorExists ) {
-			var constructorExpr = macro {};
-			
-			if( Context.getLocalClass().get().superClass != null ) {
-				constructorExpr = macro super();
-			}
-			
-			fields.push( { name: "new", pos: pos, access: [APrivate],
-				kind: FFun( { args: [], ret: null, expr: constructorExpr } )
-			} );
+		//If not, create one.
+		if(Context.getLocalClass().get().superClass != null) {
+			addClassFields(macro class Singleton {
+				private function new() {
+					instance = this;
+					super();
+				}
+			});
+		} else {
+			addClassFields(macro class Singleton {
+				private inline function new() {
+					instance = this;
+				}
+			});
 		}
 		
 		return fields;

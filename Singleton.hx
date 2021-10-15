@@ -10,7 +10,7 @@ interface Singleton {}
 
 class Singleton {
 	public static macro function build():Array<Field> {
-		if(Context.getLocalClass().get().isInterface) {
+		if( Context.getLocalClass().get().isInterface ) {
 			return Context.getBuildFields();
 		}
 		
@@ -21,9 +21,6 @@ class Singleton {
 		var type = TPath( typePath );
 		
 		var fields = Context.getBuildFields();
-		if( Context.getLocalClass().get().isInterface ) {
-			return fields;
-		}
 		
 		fields.push( { name: "instance", pos: pos, access: [AStatic, APublic], kind: FProp(#if display "default" #else "get" #end, "null", type) } );
 		#if display

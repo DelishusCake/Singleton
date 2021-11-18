@@ -79,7 +79,9 @@ class Singleton {
 		}
 		
 		//If not, create one.
-		if(Context.getLocalClass().get().superClass != null) {
+		var superClass = Context.getLocalClass().get().superClass;
+		if(superClass != null && Lambda.exists(superClass.t.get().fields.get(),
+				function(field) return field.name == "new")) {
 			addClassFields(macro class Singleton {
 				private function new() {
 					instance = this;
